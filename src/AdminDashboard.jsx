@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
-  ArrowUpRight, BriefcaseBusiness, ContactRound, GraduationCap, LayoutDashboard, Moon, Sun,
+  ArrowUpRight, BriefcaseBusiness, ContactRound, Eye, EyeOff, GraduationCap, LayoutDashboard, Moon, Sun,
   LogOut, Plus, Save, UserRound, Wrench, FolderKanban, Trash2,
 } from 'lucide-react';
 import { portfolio as fallbackPortfolio } from './data/portfolio';
@@ -21,18 +21,50 @@ const modules = [
 const splitItems = value => value.split(',').map(item => item.trim()).filter(Boolean);
 const clone = value => JSON.parse(JSON.stringify(value));
 
-function Field({ label, value, onChange, multiline = false, type = 'text', hint }) {
+async function imageToDataUrl(file) {
+  const image = await createImageBitmap(file);
+  const scale = Math.min(1, 1200 / Math.max(image.width, image.height));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.round(image.width * scale));
+  canvas.height = Math.max(1, Math.round(image.height * scale));
+  const context = canvas.getContext('2d');
+  if (!context) throw new Error('Could not process this image in your browser.');
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  image.close?.();
+
+  const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/webp', 0.76));
+  if (!blob) throw new Error('Could not compress this image. Try another image file.');
+  if (blob.size > 900 * 1024) throw new Error('Compressed image is still too large. Choose a smaller image.');
+
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error('Could not read this image file.'));
+    reader.readAsDataURL(blob);
+  });
+}
+
+function Field({ label, value, onChange, multiline = false, type = 'text', hint, placeholder, required = false }) {
   return (
     <label className={`admin-field${multiline ? ' is-wide' : ''}`}>
       <span>{label}</span>
       {multiline ? (
         <textarea rows={4} value={value ?? ''} onChange={event => onChange(event.target.value)} />
       ) : (
-        <input type={type} value={value ?? ''} onChange={event => onChange(event.target.value)} />
+        <input type={type} value={value ?? ''} placeholder={placeholder} required={required}
+          onChange={event => onChange(event.target.value)} />
       )}
       {hint && <small>{hint}</small>}
     </label>
   );
+}
+
+function CommaSeparatedField({ label, items, onChange, hint }) {
+  const [value, setValue] = useState(() => (items || []).join(', '));
+  return <Field label={label} value={value} hint={hint} onChange={text => {
+    setValue(text);
+    onChange(splitItems(text));
+  }} />;
 }
 
 function AdminDashboard() {
@@ -41,10 +73,13 @@ function AdminDashboard() {
   const [authReady, setAuthReady] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [loginSuccess, setLoginSuccess] = useState(false);
   const [draft, setDraft] = useState(() => clone(fallbackPortfolio));
   const [savedDraft, setSavedDraft] = useState(null);
   const [activeModule, setActiveModule] = useState('overview');
   const [busy, setBusy] = useState(false);
+  const [uploadingProject, setUploadingProject] = useState(null);
   const [message, setMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -132,7 +167,11 @@ function AdminDashboard() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setBusy(false);
     if (error) setErrorMessage(error.message);
-    else setPassword('');
+    else {
+      setPassword('');
+      setLoginSuccess(true);
+      window.setTimeout(() => setLoginSuccess(false), 1400);
+    }
   }
 
   async function signOut() {
@@ -152,11 +191,39 @@ function AdminDashboard() {
       .update({ content: draft, updated_at: new Date().toISOString() })
       .eq('id', 1).select('id').maybeSingle();
     setBusy(false);
-    if (error) setErrorMessage(error.message);
+    if (error) setErrorMessage(`Portfolio save failed: ${error.message}`);
     else if (!data) setErrorMessage('Nothing was saved. Confirm the admin UUID in .env.local and the database policy match.');
     else {
       setSavedDraft(clone(draft));
       setMessage('Changes saved successfully.');
+    }
+  }
+
+  async function uploadProjectImage(event, index) {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file || !supabase || !session) return;
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      setErrorMessage('Choose a JPG, PNG, or WebP image.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setErrorMessage('Choose an image smaller than 5 MB.');
+      return;
+    }
+
+    setUploadingProject(index);
+    setErrorMessage('');
+    setMessage('');
+    try {
+      const dataUrl = await imageToDataUrl(file);
+      updateArrayItem('projects', index, 'image', dataUrl);
+      setMessage('Image added to the project JSON. Save changes to publish it.');
+    } catch (error) {
+      setErrorMessage(`Image could not be added: ${error.message}`);
+    } finally {
+      setUploadingProject(null);
     }
   }
 
@@ -237,14 +304,16 @@ function AdminDashboard() {
               <div className="admin-repeat-heading"><strong>Group {index + 1}</strong><button className="admin-icon-action danger" aria-label="Remove skill group" onClick={() => removeArrayItem('stack', index)}><Trash2 size={17} /></button></div>
               <div className="admin-form-grid">
                 <Field label="Group name" value={group.category} onChange={value => updateArrayItem('stack', index, 'category', value)} />
-                <Field label="Skills (comma separated)" value={(group.items || []).join(', ')} onChange={value => updateArrayItem('stack', index, 'items', splitItems(value))} />
+                <CommaSeparatedField label="Skills (comma separated)" items={group.items}
+                  onChange={value => updateArrayItem('stack', index, 'items', value)} />
               </div>
             </article>)}
           </div>
         </section>
         <section className="admin-panel">
           <div className="admin-panel-heading"><div><h3>Languages</h3><p>Language proficiency shown on your portfolio.</p></div></div>
-          <Field label="Languages (comma separated)" value={(draft.languages || []).join(', ')} onChange={value => updateField('languages', splitItems(value))} />
+          <CommaSeparatedField label="Languages (comma separated)" items={draft.languages}
+            onChange={value => updateField('languages', value)} />
         </section>
       </div>
     );
@@ -262,10 +331,21 @@ function AdminDashboard() {
               <Field label="Project ID" value={project.id} onChange={value => updateArrayItem('projects', index, 'id', value)} />
               <Field label="Card style" value={project.appearance} onChange={value => updateArrayItem('projects', index, 'appearance', value)} hint="Use commerce, attendance, or ide." />
               <Field label="Description" value={project.description} multiline onChange={value => updateArrayItem('projects', index, 'description', value)} />
-              <Field label="Technologies (comma separated)" value={(project.technologies || []).join(', ')} onChange={value => updateArrayItem('projects', index, 'technologies', splitItems(value))} />
+              <CommaSeparatedField label="Technologies (comma separated)" items={project.technologies}
+                onChange={value => updateArrayItem('projects', index, 'technologies', value)} />
               <Field label="Live demo URL" value={project.demo} onChange={value => updateArrayItem('projects', index, 'demo', value)} />
               <Field label="Source code URL" value={project.github} onChange={value => updateArrayItem('projects', index, 'github', value)} />
               <Field label="Project label" value={project.label} onChange={value => updateArrayItem('projects', index, 'label', value)} />
+              <Field label="Preview image URL or path" value={project.image} onChange={value => updateArrayItem('projects', index, 'image', value)} hint="Paste an image URL/path or add a JPG, PNG, or WebP image below." />
+              <div className="admin-project-image-tools">
+                {project.image ? <img className="admin-project-image-preview" src={project.image} alt={`${project.title || 'Project'} preview`} /> :
+                  <div className="admin-project-image-empty">No preview image selected</div>}
+                <label className="admin-upload-button">
+                  <input type="file" accept="image/jpeg,image/png,image/webp" disabled={uploadingProject !== null}
+                    onChange={event => uploadProjectImage(event, index)} />
+                  {uploadingProject === index ? 'Processing…' : 'Add image'}
+                </label>
+              </div>
             </div>
           </article>)}
         </div>
@@ -281,7 +361,8 @@ function AdminDashboard() {
           <Field label="Status" value={draft.education?.status} onChange={value => updateNestedField('education', 'status', value)} />
           <Field label="Heading label" value={draft.education?.label} onChange={value => updateNestedField('education', 'label', value)} />
           <Field label="Description" value={draft.education?.description} multiline onChange={value => updateNestedField('education', 'description', value)} />
-          <Field label="Areas of study (comma separated)" value={(draft.education?.areas || []).join(', ')} onChange={value => updateNestedField('education', 'areas', splitItems(value))} />
+          <CommaSeparatedField label="Areas of study (comma separated)" items={draft.education?.areas}
+            onChange={value => updateNestedField('education', 'areas', value)} />
         </div>
       </section>
     );
@@ -299,7 +380,8 @@ function AdminDashboard() {
               <Field label="Period" value={item.period} onChange={value => updateArrayItem('experiences', index, 'period', value)} />
               <Field label="Card label" value={item.label} onChange={value => updateArrayItem('experiences', index, 'label', value)} />
               <Field label="Description" value={item.description} multiline onChange={value => updateArrayItem('experiences', index, 'description', value)} />
-              <Field label="Skills (comma separated)" value={(item.tags || []).join(', ')} onChange={value => updateArrayItem('experiences', index, 'tags', splitItems(value))} />
+              <CommaSeparatedField label="Skills (comma separated)" items={item.tags}
+                onChange={value => updateArrayItem('experiences', index, 'tags', value)} />
             </div>
           </article>)}
         </div>
@@ -312,14 +394,29 @@ function AdminDashboard() {
     <main className="admin-gate"><section className="admin-login-card"><h1>Connect Supabase</h1><p>Add the project URL and publishable key to <code>.env.local</code>, then restart the dev server.</p></section></main>
   );
   if (!authReady) return <main className="admin-gate"><section className="admin-login-card"><p>Checking your session…</p></section></main>;
-  if (!session) return (
+  if (!session || loginSuccess) return (
     <main className="admin-gate"><section className="admin-login-card">
       <a className="admin-login-brand" href="/">Nat Sokphary <span>PORTFOLIO ADMIN</span></a>
       <p className="admin-eyebrow">SIGN IN</p><h1>Welcome back</h1><p>Sign in to manage your portfolio content.</p>
       <form className="admin-login-form" onSubmit={signIn}>
-        <Field label="Email address" type="email" value={email} onChange={setEmail} />
-        <Field label="Password" type="password" value={password} onChange={setPassword} />
-        <button className="admin-primary-button" type="submit" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</button>
+        <Field label="Email address" type="email" value={email} onChange={setEmail}
+          placeholder="you@example.com" required />
+        <label className="admin-field">
+          <span>Password</span>
+          <div className="admin-password-input">
+            <input type={showPassword ? 'text' : 'password'} autoComplete="current-password"
+              placeholder="Enter your password" value={password}
+              onChange={event => setPassword(event.target.value)} required />
+            <button type="button" onClick={() => setShowPassword(value => !value)}
+              aria-label={showPassword ? 'Hide password' : 'Show password'} aria-pressed={showPassword}>
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+        </label>
+        <button className="admin-primary-button" type="submit" disabled={busy || loginSuccess}>
+          {busy ? 'Signing in…' : loginSuccess ? 'Signed in' : 'Sign in'}
+        </button>
+        {loginSuccess && <p className="admin-login-success" role="status">Login successful.</p>}
       </form>
       {errorMessage && <p className="admin-error" role="alert">{errorMessage}</p>}
     </section></main>
@@ -354,7 +451,7 @@ function AdminDashboard() {
         <header className="admin-topbar">
           <div className="admin-breadcrumb">Dashboard <span>/</span> {selectedModule.label}</div>
           <div className="admin-top-actions">
-            <span className="admin-save-feedback" role="status">{message || (isDirty ? 'Unsaved changes' : 'All changes saved')}</span>
+            <span className={`admin-save-feedback${message ? ' is-success' : ''}`} role="status">{message || (isDirty ? 'Unsaved changes' : 'All changes saved')}</span>
             <button className="admin-theme-toggle" type="button" onClick={() => setTheme(value => value === 'dark' ? 'light' : 'dark')}
               aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
               title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>

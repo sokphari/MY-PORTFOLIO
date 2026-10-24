@@ -372,6 +372,14 @@ h1 span {
   position: relative;
   overflow: hidden;
 }
+.project-cover-image {
+  display: block;
+  width: 100%;
+  height: 205px;
+  object-fit: cover;
+  object-position: center;
+  background: var(--surface2);
+}
 .v1 {
   background: linear-gradient(140deg, #dce9ff, #9ac0ff);
 }

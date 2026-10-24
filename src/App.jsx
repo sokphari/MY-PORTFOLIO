@@ -245,7 +245,8 @@ function App() {
             <div className="projectgrid">
               {portfolio.projects.map(project => (
                 <article className="project" key={project.id}>
-                  <ProjectArt appearance={project.appearance} />
+                  {project.image ? <img className="project-cover-image" src={project.image} alt={`${project.title} preview`} /> :
+                    <ProjectArt appearance={project.appearance} />}
                   <div className="projectbody">
                     <div className="projTitle">{project.title}</div>
                     <p>{project.description}</p>

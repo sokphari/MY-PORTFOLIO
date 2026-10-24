@@ -149,6 +149,9 @@
   font-size: 12px;
   font-weight: 700;
 }
+.admin-save-feedback.is-success {
+  color: #07845e;
+}
 .admin-theme-toggle {
   display: grid;
   flex: none;
@@ -403,6 +406,11 @@
   border-color: var(--blue);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--blue) 18%, transparent);
 }
+.admin-field input::placeholder,
+.admin-field textarea::placeholder {
+  color: var(--muted);
+  opacity: 0.75;
+}
 .admin-field small {
   color: var(--muted);
   font-size: 12px;
@@ -434,6 +442,55 @@
   min-height: 38px;
   padding: 7px 11px;
 }
+.admin-project-image-tools {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.admin-project-image-preview,
+.admin-project-image-empty {
+  display: grid;
+  width: 130px;
+  height: 82px;
+  flex: none;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface2);
+  color: var(--muted);
+  font-size: 11px;
+  text-align: center;
+}
+.admin-project-image-preview {
+  object-fit: cover;
+}
+.admin-upload-button {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+}
+.admin-upload-button:hover {
+  background: var(--surface2);
+}
+.admin-upload-button input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  clip-path: inset(50%);
+}
 .admin-alert {
   margin-bottom: 18px;
   padding: 13px 16px;
@@ -443,6 +500,12 @@
   color: #c73535;
   font-size: 14px;
   font-weight: 700;
+}
+.admin-login-success {
+  margin: -4px 0 0;
+  color: #07845e;
+  font-size: 14px;
+  font-weight: 800;
 }
 .admin-footer {
   padding: 18px 2px 0;
@@ -497,6 +560,30 @@
 .admin-login-form .admin-primary-button {
   width: 100%;
   margin-top: 4px;
+}
+.admin-password-input {
+  position: relative;
+  width: 100%;
+}
+.admin-password-input input {
+  padding-right: 48px;
+}
+.admin-password-input button {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+}
+.admin-password-input button:hover {
+  background: var(--surface2);
+  color: var(--blue);
 }
 .admin-error {
   margin-top: 16px;

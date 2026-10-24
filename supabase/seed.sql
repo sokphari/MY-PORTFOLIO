@@ -39,6 +39,7 @@ values (
         "technologies": ["Laravel", "JWT", "PostgreSQL", "Docker", "React.js"],
         "demo": "",
         "github": "",
+        "image": "",
         "appearance": "commerce"
       },
       {
@@ -50,6 +51,7 @@ values (
         "technologies": ["Spring Boot", "JWT", "PostgreSQL", "Docker", "React.js"],
         "demo": "",
         "github": "",
+        "image": "",
         "appearance": "attendance"
       }
     ],

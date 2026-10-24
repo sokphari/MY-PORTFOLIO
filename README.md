@@ -28,12 +28,12 @@ Only the publishable key belongs in this browser app. Do not put a database pass
 
 ## Portfolio admin dashboard
 
-The admin page is at `/admin`. It uses Supabase email/password sign-in and provides separate modules for profile, contact links, skills, projects, education, and experience. Changes are saved together to the portfolio content record.
+The admin page is at `/admin`. It uses Supabase email/password sign-in and provides separate modules for profile, contact links, skills, projects, education, and experience. Changes are saved together to the portfolio content record. Project cards can use a public image URL or an uploaded image; uploaded images are compressed in the browser and embedded in the project JSON.
 
 1. In Supabase **Authentication → Users**, create your admin account with your email and a strong password. Keep public sign-up disabled.
 2. Copy that user's UUID from the Users page. Set `VITE_SUPABASE_ADMIN_USER_ID` to the UUID in `.env.local`.
 3. In the Supabase SQL Editor, run `supabase/migrations/20261019001000_restrict_portfolio_updates_to_admin.sql` after replacing both zero UUIDs in its policy with the admin user's UUID.
-4. Restart the dev server, then open `/admin`, sign in with the email/password, and manage content from the sidebar modules.
+4. Restart the dev server, then open `/admin`, sign in with the email/password, and manage content from the sidebar modules. In Projects, paste an image URL/path or add a JPG, PNG, or WebP file, then save the portfolio changes.
 
 The SQL policy is the actual database security boundary. The admin UUID check in the page only controls the interface; the policy also prevents other signed-in users from writing.
 

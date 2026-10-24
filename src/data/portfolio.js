@@ -40,6 +40,7 @@ export const portfolio = {
       technologies: ['Laravel', 'JWT', 'PostgreSQL', 'Docker', 'React.js'],
       demo: '',
       github: '',
+      image: '',
       appearance: 'commerce',
     },
     {
@@ -51,6 +52,7 @@ export const portfolio = {
       technologies: ['Spring Boot', 'JWT', 'PostgreSQL', 'Docker', 'React.js'],
       demo: '',
       github: '',
+      image: '',
       appearance: 'attendance',
     },
   ],
