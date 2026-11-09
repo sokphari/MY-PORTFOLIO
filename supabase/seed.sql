@@ -23,7 +23,7 @@ values (
     "languages": ["Khmer — Fluent", "English — Intermediate"],
     "stack": [
       { "category": "⚙ Backend Development", "items": ["PHP", "Laravel", "Java", "Spring Boot", "Role-Based Access Control", "REST API", "API Integration", "JWT"] },
-      { "category": "◇ Frontend Development", "items": ["HTML5", "CSS3", "JavaScript (ES6+)", "TypeScript", "React.js", "Tailwind CSS", "Bootstrap", "Vite", "Fetch API"] },
+      { "category": "◇ Frontend Development", "items": ["HTML5", "CSS3", "JavaScript (ES6+)", "TypeScript", "React.js", "Tailwind CSS", "Bootstrap", "Fetch API"] },
       { "category": "▤ Database", "items": ["PostgreSQL", "MySQL", "SQL", "MySQL Workbench", "Redis"] },
       { "category": "⌘ Tools & DevOps", "items": ["Git", "GitHub", "Docker", "Docker Compose", "Linux", "Postman"] },
       { "category": "↗ Services & APIs", "items": ["OAuth 2.0", "Cloudinary", "KHQR / Bakong", "REST APIs"] },

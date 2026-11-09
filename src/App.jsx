@@ -46,7 +46,7 @@ function ProjectArt({ appearance }) {
 }
 
 function App() {
-  const [theme, setTheme] = useState('light');
+  const [theme, setTheme] = useState('dark');
   const [menuOpen, setMenuOpen] = useState(false);
   const [active, setActive] = useState('home');
   const [portfolio, setPortfolio] = useState(fallbackPortfolio);
